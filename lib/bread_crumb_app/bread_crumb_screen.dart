@@ -32,7 +32,7 @@ class BreadCrumb {
 
 class BreadCrumbProvider extends ChangeNotifier {
   final List<BreadCrumb> _items = [];
-  UnmodifiableListView<BreadCrumb> get item => UnmodifiableListView(_items);
+  UnmodifiableListView<BreadCrumb> get items => UnmodifiableListView(_items);
 
   void add(BreadCrumb breadCrumb) {
     for (final item in _items) {
@@ -79,19 +79,30 @@ class BreadCrumbScreen extends StatelessWidget {
         title: const Text("Bread Crumb App"),
         backgroundColor: Colors.blue,
       ),
-      body: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        TextButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return const NewBreadCrumbScreen();
-              }));
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Consumer<BreadCrumbProvider>(
+            builder: (context, value, child) {
+              return BreadCrumbWidget(
+                breadCrumbs: value.items,
+              );
             },
-            child: const Text("New Bread Crumb App")),
-        TextButton(onPressed: () {
-          context.read<BreadCrumbProvider>().reset();
-          
-        }, child: const Text("Reset")),
-      ]),
+          ),
+          TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return const NewBreadCrumbScreen();
+                }));
+              },
+              child: const Text("New Bread Crumb App")),
+          TextButton(
+              onPressed: () {
+                context.read<BreadCrumbProvider>().reset();
+              },
+              child: const Text("Reset")),
+        ],
+      ),
     );
   }
 }
@@ -104,8 +115,44 @@ class NewBreadCrumbScreen extends StatefulWidget {
 }
 
 class _NewBreadCrumbScreenState extends State<NewBreadCrumbScreen> {
+  late final TextEditingController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Add New Bread Crumb"),
+      ),
+      body: Column(children: [
+        TextField(
+          controller: _controller,
+          decoration: const InputDecoration(
+            hintText: "Add New Bread Crumb here...",
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            final text = _controller.text;
+            if (text.isNotEmpty) {
+              final breadCrumb = BreadCrumb(isActive: false, name: text);
+              context.read<BreadCrumbProvider>().add(breadCrumb);
+              Navigator.pop(context);
+            }
+          },
+          child: const Text("Add"),
+        )
+      ]),
+    );
   }
 }
